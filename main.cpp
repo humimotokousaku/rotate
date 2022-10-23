@@ -19,6 +19,17 @@ typedef struct Player {
 	int isAlive;
 	unsigned int color;
 };
+typedef struct Matrix2x2 {
+	float m[2][2];
+};
+
+//回転の関数
+Vector2 Multiply(Vector2 vector, Matrix2x2 matrix, Vector2 pos) {
+	Vector2 Multiply;
+	Multiply.x = ((vector.x * matrix.m[0][0]) + (vector.y * matrix.m[1][0])) + pos.x;
+	Multiply.y = ((vector.x * matrix.m[0][1]) + (vector.y * matrix.m[1][1])) + pos.y;
+	return Multiply;
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -31,7 +42,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char preKeys[256] = { 0 };
 
 	// 画像
-///	int direction = Novice::LoadTexture("./TD1_direction.png");
+	int direction = Novice::LoadTexture("./TD1_direction.png");
 
 	// 宣言
 	// player
@@ -43,22 +54,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		BLUE
 	};
 
-	// 回転する円
-	int kCircleCenterX = 400;
-	int kCircleCenterY = 400;
-	int kCircleRadius = 20;
-	int kRedCircleRadius = 10;
-
-	// 回転の中心点
-	int circleCenterOffsetX;
-	int circleCenterOffsetY;
-	// 円の中心
-	int circleCenterX;
-	int circleCenterY;
 	// 回転
-	const float kRotateAngle = 1.0f / 64.0f * M_PI;
-	float theta = 0.0f;
+	float theta0 = 0.0f;
 
+	int width = 128;
+	int height = 128;
+
+	//回転前
+	Vector2 leftTop = { -width / 2,height / 2 };
+	Vector2 rightTop = { width / 2, height / 2 };
+	Vector2 leftBottom = { -width / 2, -height / 2 };
+	Vector2 rightBottom = { width / 2,-height / 2 };
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -85,22 +91,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (keys[DIK_D]) {
 			player.pos.x += player.speed.x;
 		}
-		// 回転するためにthetaを足す
-		theta += kRotateAngle;
 
-		// まずクリックした位置が原点になるように円の中心点を移動
-		circleCenterOffsetX = kCircleCenterX - (kCircleCenterX - player.size);
-		circleCenterOffsetY = kCircleCenterY - (kCircleCenterY - player.size);
+		theta0 += 1.0 / 32.0f * M_PI;
 
-		// 回転させる
-		circleCenterX =
-			(circleCenterOffsetX * cosf(theta) - circleCenterOffsetY * sinf(theta));
-		circleCenterY =
-			(circleCenterOffsetY * cosf(theta) + circleCenterOffsetX * sinf(theta));
-
-		// 移動した分を戻す
-		circleCenterX += player.pos.x;
-		circleCenterY += player.pos.y;
+		///変数の初期化
+		Matrix2x2 theta;
+		theta.m[0][0] = cosf(theta0);
+		theta.m[0][1] = sinf(theta0);
+		theta.m[1][0] = -sinf(theta0);
+		theta.m[1][1] = cosf(theta0);
+		//回転後
+		Vector2 rotatedLeftTop = Multiply(leftTop, theta, player.pos);
+		Vector2 rotatedRightTop = Multiply(rightTop, theta, player.pos);
+		Vector2 rotatedLeftBottom = Multiply(leftBottom, theta, player.pos);
+		Vector2 rotatedRightBottom = Multiply(rightBottom, theta, player.pos);
 
 		///
 		/// ↑更新処理ここまで
@@ -110,12 +114,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		// 回転してる円
-		Novice::DrawEllipse(circleCenterX, circleCenterY, kCircleRadius, kCircleRadius, 0.0f, RED, kFillModeSolid);
-
+		Novice::DrawQuad(
+			rotatedLeftTop.x, rotatedLeftTop.y,
+			rotatedRightTop.x,rotatedRightTop.y,
+			rotatedLeftBottom.x, rotatedLeftBottom.y,
+			rotatedRightBottom.x, rotatedRightBottom.y,
+			0, 0,
+			128, 128,
+			direction,
+			WHITE
+		);
 		// player
 		Novice::DrawEllipse(
-			player.pos.x, player.pos.y, kRedCircleRadius, kRedCircleRadius, 0.0f, BLUE,
+			player.pos.x, player.pos.y, player.size, player.size, 0.0f, BLUE,
 			kFillModeSolid);
+
 		///
 		/// ↑描画処理ここまで
 		///
