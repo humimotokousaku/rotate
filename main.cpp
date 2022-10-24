@@ -61,10 +61,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int height = 128;
 
 	//回転前
-	Vector2 leftTop = { -width / 2,height / 2 };
-	Vector2 rightTop = { width / 2, height / 2 };
-	Vector2 leftBottom = { -width / 2, -height / 2 };
-	Vector2 rightBottom = { width / 2,-height / 2 };
+	Vector2 leftTop = { -width / 2,-height };
+	Vector2 rightTop = { width / 2, -height };
+	Vector2 leftBottom = { -width / 2, 0 };
+	Vector2 rightBottom = { width / 2,0 };
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
